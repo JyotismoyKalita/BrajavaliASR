@@ -19,6 +19,14 @@ function readAudioDuration(file) {
   });
 }
 
+function getInitialTheme() {
+  const savedTheme = localStorage.getItem("brajavali-theme");
+  if (savedTheme === "light" || savedTheme === "dark") {
+    return savedTheme;
+  }
+  return window.matchMedia?.("(prefers-color-scheme: light)").matches ? "light" : "dark";
+}
+
 export default function App() {
   const [file, setFile] = useState(null);
   const [audioUrl, setAudioUrl] = useState("");
@@ -29,6 +37,7 @@ export default function App() {
   const [result, setResult] = useState(null);
   const [error, setError] = useState("");
   const [inputResetKey, setInputResetKey] = useState(0);
+  const [theme, setTheme] = useState(getInitialTheme);
 
   useEffect(() => {
     return () => {
@@ -37,6 +46,11 @@ export default function App() {
       }
     };
   }, [audioUrl]);
+
+  useEffect(() => {
+    document.documentElement.dataset.theme = theme;
+    localStorage.setItem("brajavali-theme", theme);
+  }, [theme]);
 
   const fileName = useMemo(() => file?.name || "", [file]);
   const hasAudio = Boolean(audioUrl);
@@ -115,17 +129,51 @@ export default function App() {
     setInputResetKey((prev) => prev + 1);
   }
 
-  const linkStyle = {textDecoration: "none", color: "white", fontWeight: "bold", marginRight: "10px", marginLeft: "10px"};
+  function toggleTheme() {
+    setTheme((currentTheme) => (currentTheme === "dark" ? "light" : "dark"));
+  }
 
   return (
     <main className="page app-shell">
       <section className="hero hero-landing">
-        <div>
-          <span className="hero-pill">A mini project by<a href="https://www.linkedin.com/in/jyotismoy-kalita/" style={linkStyle}>Jyotismoy Kalita</a>and<a href="https://www.linkedin.com/in/sanjib-das-6226342a9/" style={linkStyle}>Sanjib Das</a>: 6th Semester, Department of Information Techonology, Gauhati University</span>
+        <button
+          className="theme-toggle"
+          type="button"
+          onClick={toggleTheme}
+          aria-label={`Switch to ${theme === "dark" ? "light" : "dark"} theme`}
+          title={`Switch to ${theme === "dark" ? "light" : "dark"} theme`}
+        >
+          {theme === "dark" ? (
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <circle cx="12" cy="12" r="4"></circle>
+              <line x1="12" y1="2" x2="12" y2="4"></line>
+              <line x1="12" y1="20" x2="12" y2="22"></line>
+              <line x1="4.93" y1="4.93" x2="6.34" y2="6.34"></line>
+              <line x1="17.66" y1="17.66" x2="19.07" y2="19.07"></line>
+              <line x1="2" y1="12" x2="4" y2="12"></line>
+              <line x1="20" y1="12" x2="22" y2="12"></line>
+              <line x1="4.93" y1="19.07" x2="6.34" y2="17.66"></line>
+              <line x1="17.66" y1="6.34" x2="19.07" y2="4.93"></line>
+            </svg>
+          ) : (
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+            </svg>
+          )}
+        </button>
+        <div className="hero-content">
+          <span className="hero-pill">অসমীয়া ভাষা প্ৰযুক্তি • Gauhati University Mini Project</span>
           <h1>Brajavali ASR Studio</h1>
-          <p>
-          Echoes of tradition, decoded by machine learning, where, Brajavali meets AI
-          </p>
+          <p>Echoes of tradition, decoded by machine learning, where Brajavali meets AI.</p>
+          <div className="hero-authors">
+            <a href="https://www.linkedin.com/in/jyotismoy-kalita/">Jyotismoy Kalita</a>
+            <span>and</span>
+            <a href="https://www.linkedin.com/in/sanjib-das-6226342a9/">Sanjib Das</a>
+            <span>6th Semester, Department of Information Technology</span>
+          </div>
+        </div>
+        <div className="hero-visual" aria-hidden="true">
+          <img src="/assets/assam/monikut.png" alt="" />
         </div>
       </section>
 
@@ -159,6 +207,7 @@ export default function App() {
             onRegionChange={handleRegionChange}
             trimStartSec={trimStartSec}
             trimEndSec={trimEndSec}
+            theme={theme}
           />
         ) : (
           <div className="card empty-state">
@@ -169,16 +218,19 @@ export default function App() {
       </section>
 
       <section className="card project-description-card project-footer">
-        <label className="label">Project Description</label>
-        <p className="description-text">
-          Brajavali is a low-resource language with very limited available training data. To
-          overcome this scarcity, transfer learning is applied by adapting the Whisper model to
-          Brajavali using the small dataset. Parameter-efficient fine-tuning with LoRA (Low-Rank
-          Adaptation) is employed, which freezes most of the model&apos;s layers. This approach
-          prevents catastrophic forgetting of the original multilingual knowledge while allowing the
-          model to learn Brajavali-specific patterns. As a result, the model adapts effectively to
-          the new language without overfitting or memorizing the limited data.
-        </p>
+        <div className="project-copy">
+          <label className="label">Project Description</label>
+          <p className="description-text">
+            Brajavali is a low-resource language with very limited available training data. To
+            overcome this scarcity, transfer learning is applied by adapting the Whisper model to
+            Brajavali using the small dataset. Parameter-efficient fine-tuning with LoRA (Low-Rank
+            Adaptation) is employed, which freezes most of the model&apos;s layers. This approach
+            prevents catastrophic forgetting of the original multilingual knowledge while allowing the
+            model to learn Brajavali-specific patterns. As a result, the model adapts effectively to
+            the new language without overfitting or memorizing the limited data.
+          </p>
+        </div>
+        <img className="project-symbols" src="/assets/assam/sattriya-elements.png" alt="" aria-hidden="true" />
       </section>
     </main>
   );

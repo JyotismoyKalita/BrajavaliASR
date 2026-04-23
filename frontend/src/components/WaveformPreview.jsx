@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import WaveSurfer from "wavesurfer.js";
 import RegionsPlugin from "wavesurfer.js/dist/plugins/regions.esm.js";
 
-export default function WaveformPreview({ audioUrl, onRegionChange, trimStartSec, trimEndSec }) {
+export default function WaveformPreview({ audioUrl, onRegionChange, trimStartSec, trimEndSec, theme }) {
   const containerRef = useRef(null);
   const waveSurferRef = useRef(null);
   const regionRef = useRef(null);
@@ -23,12 +23,13 @@ export default function WaveformPreview({ audioUrl, onRegionChange, trimStartSec
     }
 
     const regionsPlugin = RegionsPlugin.create();
+    const isLightTheme = theme === "light";
     const waveSurfer = WaveSurfer.create({
       container: containerRef.current,
       plugins: [regionsPlugin],
-      waveColor: "#9ec5ff",
-      progressColor: "#4f46e5",
-      cursorColor: "#0f172a",
+      waveColor: isLightTheme ? "#2a1717" : "#fff7ef",
+      progressColor: "#c21d18",
+      cursorColor: isLightTheme ? "#050505" : "#ffffff",
       barWidth: 2,
       height: 120,
       normalize: true,
@@ -45,7 +46,7 @@ export default function WaveformPreview({ audioUrl, onRegionChange, trimStartSec
       const region = regionsPlugin.addRegion({
         start: 0,
         end: waveDuration > 0 ? waveDuration : 0.01,
-        color: "rgba(79, 70, 229, 0.2)",
+        color: isLightTheme ? "rgba(194, 29, 24, 0.16)" : "rgba(209, 58, 47, 0.22)",
         drag: true,
         resize: true,
       });
@@ -68,7 +69,7 @@ export default function WaveformPreview({ audioUrl, onRegionChange, trimStartSec
     return () => {
       waveSurfer.destroy();
     };
-  }, [audioUrl, onRegionChange]);
+  }, [audioUrl, onRegionChange, theme]);
 
   function togglePlay() {
     if (!waveSurferRef.current) {
