@@ -40,6 +40,15 @@ export default function App() {
 
   const fileName = useMemo(() => file?.name || "", [file]);
   const hasAudio = Boolean(audioUrl);
+  const selectedDurationSec = useMemo(() => {
+    if (!hasAudio) {
+      return 0;
+    }
+    if (trimEndSec !== null && trimEndSec !== undefined) {
+      return Math.max(0, trimEndSec - trimStartSec);
+    }
+    return 0;
+  }, [hasAudio, trimEndSec, trimStartSec]);
 
   const handleRegionChange = useCallback((start, end) => {
     setTrimStartSec(start);
@@ -136,6 +145,7 @@ export default function App() {
             result={result}
             error={error}
             hasAudio={hasAudio}
+            selectedDurationSec={selectedDurationSec}
             onRunInference={runInference}
             onClear={clearInferenceOutput}
           />

@@ -4,7 +4,6 @@ import torch
 from transformers import WhisperForConditionalGeneration, WhisperProcessor
 
 from .config import DEVICE, MODEL_DIR
-from .ipa import generate_brajavali_ipa
 
 
 class BrajavaliASRService:
@@ -12,7 +11,7 @@ class BrajavaliASRService:
         self.model = WhisperForConditionalGeneration.from_pretrained(str(MODEL_DIR)).to(DEVICE)
         self.processor = WhisperProcessor.from_pretrained(str(MODEL_DIR))
 
-    def transcribe(self, speech, sample_rate: int) -> tuple[str, str]:
+    def transcribe(self, speech, sample_rate: int) -> str:
         input_features = self.processor.feature_extractor(
             speech,
             sampling_rate=sample_rate,
@@ -29,9 +28,7 @@ class BrajavaliASRService:
                 task="transcribe",
             )
 
-        transcription = self.processor.batch_decode(predicted_ids, skip_special_tokens=True)[0].strip()
-        ipa = generate_brajavali_ipa(transcription)
-        return transcription, ipa
+        return self.processor.batch_decode(predicted_ids, skip_special_tokens=True)[0].strip()
 
 
 asr_service = BrajavaliASRService()

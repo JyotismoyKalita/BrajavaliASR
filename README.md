@@ -13,7 +13,7 @@ The system includes:
 - A FastAPI backend for audio processing and model inference
 - A React frontend for user interaction
 - A locally stored Whisper LoRA model
-- Audio trimming, normalization, waveform preview, transcription, and IPA generation
+- Audio trimming, normalization, waveform preview, and word-level transcription
 
 ## Features
 
@@ -22,7 +22,7 @@ The system includes:
 - Trim audio before inference
 - Optional audio normalization
 - Transcribe Brajavali speech using a Whisper-based model
-- Generate IPA-style phonetic output from the transcription
+- Automatically split long audio at pauses before transcription
 - REST API support through FastAPI
 - Clean frontend built with React and Vite
 
@@ -63,7 +63,6 @@ BrajavaliASR/
 |   |   |-- main.py              # FastAPI routes and inference endpoint
 |   |   |-- asr_service.py       # Whisper model loading and transcription
 |   |   |-- audio_utils.py       # Audio loading, trimming, normalization, resampling
-|   |   |-- ipa.py               # IPA-style phonetic conversion
 |   |   |-- schemas.py           # API response models
 |   |   `-- config.py            # Model path and device configuration
 |   `-- requirements.txt
@@ -113,7 +112,6 @@ cd backend
 python -m venv .venv
 .venv\Scripts\Activate.ps1
 pip install -r requirements.txt
-pip install pydub
 uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 ```
 
@@ -181,9 +179,24 @@ Response:
 ```json
 {
   "transcription": "transcribed text",
-  "ipa": "phonetic output",
   "sample_rate": 16000,
-  "duration_sec": 4.25
+  "duration_sec": 24.8,
+  "chunks": [
+    {
+      "index": 1,
+      "start_sec": 0.0,
+      "end_sec": 11.72,
+      "transcription": "first chunk text",
+      "split_reason": "silence"
+    },
+    {
+      "index": 2,
+      "start_sec": 11.72,
+      "end_sec": 24.8,
+      "transcription": "second chunk text",
+      "split_reason": "final"
+    }
+  ]
 }
 ```
 
@@ -193,9 +206,25 @@ Response:
 2. The frontend displays a waveform preview and allows trim selection.
 3. The selected audio settings are sent to the FastAPI backend.
 4. The backend loads the audio, trims it, optionally normalizes it, and resamples it to 16 kHz.
-5. The Whisper-based Brajavali model generates the transcription.
-6. The transcription is converted into an IPA-style phonetic representation.
-7. The frontend displays the transcription, IPA output, duration, and sample rate.
+5. The backend splits the selected audio at long pauses when they are present, then applies length-based chunking if needed.
+6. The Whisper-based Brajavali model generates word-level transcription for each chunk.
+7. The backend combines the chunk transcriptions into one final transcription.
+8. The frontend displays the transcription, duration, sample rate, and chunk-wise output when applicable.
+
+## Long Audio Handling
+
+The model performs best on short audio clips of about 13 seconds. The backend uses long pauses as natural boundaries, then applies silence-aware length-based chunking only when a segment is still too long:
+
+- Pauses of about 0.4 seconds or longer are treated as preferred split points.
+- Segments shorter than 1 second around a pause are ignored to avoid tiny fragments.
+- Audio with no long pauses is processed as a single clip when it is up to 14 seconds.
+- Longer segments are split around a 12-second target.
+- The splitter searches for a pause between 9 and 13 seconds from the current chunk start.
+- If a clear pause is found, the chunk is cut at that pause.
+- If no pause is found, the splitter cuts at the lowest-energy point in the search window.
+- Final chunks shorter than 3 seconds are merged with the previous chunk.
+
+This keeps most chunks within the model's preferred input length while reducing boundary errors caused by cutting through spoken words.
 
 ## Model Notes
 
@@ -208,7 +237,6 @@ The project uses LoRA-based fine-tuning to make adaptation practical for a low-r
 - The model performance depends heavily on the size and quality of the Brajavali training data.
 - Accuracy may vary for noisy audio, unclear speech, or accents not represented in the dataset.
 - CPU inference may be slow compared to GPU inference.
-- IPA generation is rule-based and may not fully capture all pronunciation variations.
 
 ## Future Scope
 
@@ -217,7 +245,6 @@ The project uses LoRA-based fine-tuning to make adaptation practical for a low-r
 - Add word error rate (WER) based evaluation reports
 - Support batch transcription
 - Add speaker metadata and dataset management tools
-- Improve IPA conversion using a more complete linguistic rule set
 - Package the application for easier deployment
 
 ## Contributors

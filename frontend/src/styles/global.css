@@ -328,9 +328,53 @@ body {
   padding: 4px 10px;
 }
 
+.chunk-details {
+  border-top: 1px solid #2a2a30;
+  padding-top: 12px;
+}
+
+.chunk-details summary {
+  color: #fda4af;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.chunk-list {
+  display: grid;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.chunk-item {
+  border: 1px solid #2a2a30;
+  border-radius: 12px;
+  padding: 12px;
+  background: #15151a;
+}
+
+.chunk-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+  color: #a1a1aa;
+  font-size: 0.85rem;
+}
+
+.chunk-text {
+  margin: 8px 0 0;
+  color: #f4f4f5;
+  line-height: 1.55;
+  white-space: pre-wrap;
+}
+
 .error {
   margin: 0;
   color: #fb7185;
+}
+
+.warning {
+  margin: 0 0 12px;
+  color: #fde68a;
 }
 
 .player-controls {
