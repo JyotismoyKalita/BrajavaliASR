@@ -34,11 +34,21 @@ class AudioChunk:
 
 def load_audio(file_path: str) -> tuple[np.ndarray, int]:
     if file_path.endswith(".webm") or file_path.endswith(".ogg"):
-        audio = AudioSegment.from_file(file_path)
-        wav_buffer = io.BytesIO()
-        audio.export(wav_buffer, format="wav")
-        wav_buffer.seek(0)
-        speech, sample_rate = sf.read(wav_buffer)
+        try:
+            with open(file_path, "rb") as audio_file:
+                audio_bytes = audio_file.read()
+
+            source_format = file_path.rsplit(".", 1)[-1].lower()
+            audio = AudioSegment.from_file(io.BytesIO(audio_bytes), format=source_format)
+            wav_buffer = io.BytesIO()
+            audio.export(wav_buffer, format="wav")
+            wav_buffer.seek(0)
+            speech, sample_rate = sf.read(wav_buffer)
+        except FileNotFoundError as exc:
+            raise ValueError(
+                "This audio format requires FFmpeg/ffprobe to be installed on the backend. "
+                "Please upload WAV audio or install FFmpeg."
+            ) from exc
     else:
         speech, sample_rate = sf.read(file_path)
 

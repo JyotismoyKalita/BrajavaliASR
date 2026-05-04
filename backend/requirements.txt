@@ -7,3 +7,5 @@ torchaudio
 soundfile
 numpy
 pydub
+peft
+audioop-lts

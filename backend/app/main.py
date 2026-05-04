@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import os
 import tempfile
+import time
 
 from fastapi import FastAPI, File, Form, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
@@ -83,8 +84,14 @@ async def transcribe(
     except Exception as exc:
         raise HTTPException(status_code=500, detail=f"Inference failed: {exc}") from exc
     finally:
+        await audio.close()
         if temp_file_path and os.path.exists(temp_file_path):
-            os.remove(temp_file_path)
+            for _ in range(5):
+                try:
+                    os.remove(temp_file_path)
+                    break
+                except PermissionError:
+                    time.sleep(0.1)
 
 
 def merge_chunk_transcriptions(transcriptions: list[str]) -> str:

@@ -1,5 +1,76 @@
 import React, { useRef, useState } from "react";
 
+function audioBufferToWav(audioBuffer) {
+  const numberOfChannels = audioBuffer.numberOfChannels;
+  const sampleRate = audioBuffer.sampleRate;
+  const format = 1;
+  const bitDepth = 16;
+  const bytesPerSample = bitDepth / 8;
+  const blockAlign = numberOfChannels * bytesPerSample;
+  const dataLength = audioBuffer.length * blockAlign;
+  const buffer = new ArrayBuffer(44 + dataLength);
+  const view = new DataView(buffer);
+  const channels = [];
+  let offset = 0;
+
+  function writeString(text) {
+    for (let index = 0; index < text.length; index += 1) {
+      view.setUint8(offset, text.charCodeAt(index));
+      offset += 1;
+    }
+  }
+
+  for (let channel = 0; channel < numberOfChannels; channel += 1) {
+    channels.push(audioBuffer.getChannelData(channel));
+  }
+
+  writeString("RIFF");
+  view.setUint32(offset, 36 + dataLength, true);
+  offset += 4;
+  writeString("WAVE");
+  writeString("fmt ");
+  view.setUint32(offset, 16, true);
+  offset += 4;
+  view.setUint16(offset, format, true);
+  offset += 2;
+  view.setUint16(offset, numberOfChannels, true);
+  offset += 2;
+  view.setUint32(offset, sampleRate, true);
+  offset += 4;
+  view.setUint32(offset, sampleRate * blockAlign, true);
+  offset += 4;
+  view.setUint16(offset, blockAlign, true);
+  offset += 2;
+  view.setUint16(offset, bitDepth, true);
+  offset += 2;
+  writeString("data");
+  view.setUint32(offset, dataLength, true);
+  offset += 4;
+
+  for (let sampleIndex = 0; sampleIndex < audioBuffer.length; sampleIndex += 1) {
+    for (let channel = 0; channel < numberOfChannels; channel += 1) {
+      const sample = Math.max(-1, Math.min(1, channels[channel][sampleIndex]));
+      const pcmValue = sample < 0 ? sample * 0x8000 : sample * 0x7fff;
+      view.setInt16(offset, pcmValue, true);
+      offset += bytesPerSample;
+    }
+  }
+
+  return new Blob([buffer], { type: "audio/wav" });
+}
+
+async function convertBlobToWav(blob) {
+  const audioContext = new AudioContext();
+
+  try {
+    const arrayBuffer = await blob.arrayBuffer();
+    const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
+    return audioBufferToWav(audioBuffer);
+  } finally {
+    await audioContext.close();
+  }
+}
+
 export default function AudioUpload({
   onFileChange,
   fileName,
@@ -24,20 +95,28 @@ export default function AudioUpload({
         };
 
         mediaRecorder.onstop = () => {
-          const mimeType = mediaRecorderRef.current.mimeType || "audio/webm";
+          const mimeType = mediaRecorderRef.current?.mimeType || "audio/webm";
           const audioBlob = new Blob(audioChunksRef.current, { type: mimeType });
-          const extension = mimeType.includes("wav") ? "wav" : "webm";
-          const recordedFile = new File([audioBlob], `recording-${Date.now()}.${extension}`, {
-            type: mimeType,
-          });
-          const mockEvent = {
-            target: {
-              files: [recordedFile],
-              value: "",
-            },
-          };
-          onFileChange(mockEvent);
-          stream.getTracks().forEach((track) => track.stop());
+
+          (async () => {
+            try {
+              const wavBlob = await convertBlobToWav(audioBlob);
+              const recordedFile = new File([wavBlob], `recording-${Date.now()}.wav`, {
+                type: "audio/wav",
+              });
+              const mockEvent = {
+                target: {
+                  files: [recordedFile],
+                  value: "",
+                },
+              };
+              onFileChange(mockEvent);
+            } catch (conversionError) {
+              alert("Recording was captured, but converting it to WAV failed in the browser.");
+            } finally {
+              stream.getTracks().forEach((track) => track.stop());
+            }
+          })();
         };
 
         mediaRecorder.start();
