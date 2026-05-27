@@ -32,7 +32,6 @@ export default function App() {
   const [audioUrl, setAudioUrl] = useState("");
   const [trimStartSec, setTrimStartSec] = useState(0);
   const [trimEndSec, setTrimEndSec] = useState(null);
-  const [normalize, setNormalize] = useState(false);
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState(null);
   const [error, setError] = useState("");
@@ -106,7 +105,6 @@ export default function App() {
         file,
         trimStartSec,
         trimEndSec,
-        normalize,
       });
       setResult(payload);
     } catch (requestError) {
@@ -182,8 +180,6 @@ export default function App() {
           <AudioUpload
             onFileChange={onFileChange}
             fileName={fileName}
-            normalize={normalize}
-            onNormalizeChange={setNormalize}
             inputResetKey={inputResetKey}
           />
         </div>

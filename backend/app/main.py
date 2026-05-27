@@ -8,7 +8,7 @@ from fastapi import FastAPI, File, Form, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 
 from .asr_service import asr_service
-from .audio_utils import load_audio, normalize_audio, resample_audio, split_audio_for_asr, trim_audio
+from .audio_utils import load_audio, resample_audio, split_audio_for_asr, trim_audio
 from .schemas import TranscriptionChunkResponse, TranscriptionResponse
 
 app = FastAPI(title="Brajavali ASR API", version="1.0.0")
@@ -32,7 +32,6 @@ async def transcribe(
     audio: UploadFile = File(...),
     trim_start_sec: float = Form(0.0),
     trim_end_sec: float | None = Form(None),
-    normalize: bool = Form(False),
 ) -> TranscriptionResponse:
     suffix = os.path.splitext(audio.filename or "audio.wav")[1] or ".wav"
     temp_file_path = None
@@ -48,9 +47,6 @@ async def transcribe(
 
         if speech.size == 0:
             raise HTTPException(status_code=400, detail="Trim range produced empty audio.")
-
-        if normalize:
-            speech = normalize_audio(speech)
 
         speech, sample_rate = resample_audio(speech, sample_rate)
         duration_sec = float(len(speech) / sample_rate) if sample_rate else 0.0

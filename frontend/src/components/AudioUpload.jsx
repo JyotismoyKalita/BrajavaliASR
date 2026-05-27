@@ -74,8 +74,6 @@ async function convertBlobToWav(blob) {
 export default function AudioUpload({
   onFileChange,
   fileName,
-  normalize,
-  onNormalizeChange,
   inputResetKey,
 }) {
   const [isRecording, setIsRecording] = useState(false);
@@ -171,15 +169,6 @@ export default function AudioUpload({
 
         <span className="muted file-name">{fileName || "No file selected"}</span>
       </div>
-
-      <label className="checkbox-row upload-normalize-row">
-        <input
-          type="checkbox"
-          checked={normalize}
-          onChange={(e) => onNormalizeChange(e.target.checked)}
-        />
-        Normalize audio before inference
-      </label>
     </div>
   );
 }

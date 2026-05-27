@@ -4,7 +4,6 @@ export async function transcribeAudio({
   file,
   trimStartSec,
   trimEndSec,
-  normalize,
 }) {
   const formData = new FormData();
   formData.append("audio", file);
@@ -12,7 +11,6 @@ export async function transcribeAudio({
   if (trimEndSec !== null && trimEndSec !== undefined && Number.isFinite(trimEndSec)) {
     formData.append("trim_end_sec", String(trimEndSec));
   }
-  formData.append("normalize", String(Boolean(normalize)));
 
   const response = await fetch(`${API_BASE_URL}/transcribe`, {
     method: "POST",
