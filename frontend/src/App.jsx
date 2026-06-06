@@ -32,6 +32,7 @@ export default function App() {
   const [audioUrl, setAudioUrl] = useState("");
   const [trimStartSec, setTrimStartSec] = useState(0);
   const [trimEndSec, setTrimEndSec] = useState(null);
+  const [disableSplitting, setDisableSplitting] = useState(false);
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState(null);
   const [error, setError] = useState("");
@@ -105,6 +106,7 @@ export default function App() {
         file,
         trimStartSec,
         trimEndSec,
+        disableSplitting,
       });
       setResult(payload);
     } catch (requestError) {
@@ -180,6 +182,8 @@ export default function App() {
           <AudioUpload
             onFileChange={onFileChange}
             fileName={fileName}
+            disableSplitting={disableSplitting}
+            onDisableSplittingChange={setDisableSplitting}
             inputResetKey={inputResetKey}
           />
         </div>
@@ -190,6 +194,7 @@ export default function App() {
             error={error}
             hasAudio={hasAudio}
             selectedDurationSec={selectedDurationSec}
+            disableSplitting={disableSplitting}
             onRunInference={runInference}
             onClear={clearInferenceOutput}
           />

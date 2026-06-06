@@ -4,12 +4,13 @@ export default function ResultPanel({
   error,
   hasAudio,
   selectedDurationSec,
+  disableSplitting,
   onRunInference,
   onClear,
 }) {
   const chunks = result?.chunks || [];
   const wasChunked = chunks.length > 1;
-  const willChunk = hasAudio && selectedDurationSec > 14;
+  const willChunk = hasAudio && selectedDurationSec > 14 && !disableSplitting;
   const splitLabels = {
     long_pause: "long-pause split",
     silence: "pause split",
@@ -32,6 +33,11 @@ export default function ResultPanel({
       {willChunk && !result && (
         <p className="warning">
           Selected audio is {selectedDurationSec.toFixed(2)} seconds. It will be split at pauses before inference.
+        </p>
+      )}
+      {disableSplitting && hasAudio && selectedDurationSec > 14 && !result && (
+        <p className="warning">
+          Selected audio is {selectedDurationSec.toFixed(2)} seconds. Splitting is disabled, so inference will run on the full selected region.
         </p>
       )}
       {loading && <p className="muted">Running inference...</p>}

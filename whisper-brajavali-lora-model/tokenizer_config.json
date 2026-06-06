@@ -116,6 +116,7 @@
   ],
   "is_local": false,
   "language": null,
+  "local_files_only": false,
   "model_max_length": 1024,
   "pad_token": "<|endoftext|>",
   "predict_timestamps": false,

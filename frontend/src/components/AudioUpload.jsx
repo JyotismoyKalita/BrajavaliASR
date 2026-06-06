@@ -74,6 +74,8 @@ async function convertBlobToWav(blob) {
 export default function AudioUpload({
   onFileChange,
   fileName,
+  disableSplitting,
+  onDisableSplittingChange,
   inputResetKey,
 }) {
   const [isRecording, setIsRecording] = useState(false);
@@ -169,6 +171,14 @@ export default function AudioUpload({
 
         <span className="muted file-name">{fileName || "No file selected"}</span>
       </div>
+      <label className="checkbox-row">
+        <input
+          type="checkbox"
+          checked={disableSplitting}
+          onChange={(event) => onDisableSplittingChange(event.target.checked)}
+        />
+        Prevent file splitting
+      </label>
     </div>
   );
 }
