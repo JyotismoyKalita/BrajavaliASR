@@ -8,7 +8,7 @@ from fastapi import FastAPI, File, Form, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 
 from .asr_service import asr_service
-from .audio_utils import load_audio, resample_audio, split_audio_for_asr, trim_audio
+from .audio_utils import AudioChunk, load_audio, resample_audio, split_audio_for_asr, trim_audio
 from .schemas import TranscriptionChunkResponse, TranscriptionResponse
 
 app = FastAPI(title="Brajavali ASR API", version="1.0.0")
@@ -32,6 +32,7 @@ async def transcribe(
     audio: UploadFile = File(...),
     trim_start_sec: float = Form(0.0),
     trim_end_sec: float | None = Form(None),
+    disable_splitting: bool = Form(False),
 ) -> TranscriptionResponse:
     suffix = os.path.splitext(audio.filename or "audio.wav")[1] or ".wav"
     temp_file_path = None
@@ -50,7 +51,10 @@ async def transcribe(
 
         speech, sample_rate = resample_audio(speech, sample_rate)
         duration_sec = float(len(speech) / sample_rate) if sample_rate else 0.0
-        audio_chunks = split_audio_for_asr(speech, sample_rate)
+        if disable_splitting:
+            audio_chunks = [AudioChunk(speech, 0.0, duration_sec, "single")]
+        else:
+            audio_chunks = split_audio_for_asr(speech, sample_rate)
         chunk_responses: list[TranscriptionChunkResponse] = []
         chunk_transcriptions: list[str] = []
 
